@@ -1,4 +1,4 @@
-package org.superbiz.moviefun.FileStore;
+package org.superbiz.moviefun.blobstore;
 
 import org.apache.tika.Tika;
 import org.apache.tika.io.IOUtils;
@@ -16,7 +16,6 @@ import java.util.Optional;
 
 import static java.lang.String.format;
 
-@Component
 public class FileStore implements BlobStore {
     private final String fileStoreName;
 

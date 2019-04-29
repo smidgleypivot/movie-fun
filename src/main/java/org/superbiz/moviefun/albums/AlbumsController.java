@@ -1,5 +1,6 @@
 package org.superbiz.moviefun.albums;
 
+import org.apache.tika.Tika;
 import org.apache.tika.io.IOUtils;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -10,9 +11,12 @@ import org.springframework.web.multipart.MultipartFile;
 import org.superbiz.moviefun.blobstore.Blob;
 import org.superbiz.moviefun.blobstore.BlobStore;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
@@ -20,6 +24,7 @@ import java.util.Optional;
 
 import static java.lang.ClassLoader.getSystemResource;
 import static java.lang.String.format;
+import static java.nio.file.Files.readAllBytes;
 
 
 @Controller
@@ -66,10 +71,16 @@ public class AlbumsController {
         return new HttpEntity<>(bytes,headers);
     }
 
-    private Blob getImageBlobOrDefault(@PathVariable long albumId) throws IOException {
+    private Blob getImageBlobOrDefault(@PathVariable long albumId) throws IOException, URISyntaxException {
         Optional<Blob> result = blobStore.get(format("%d",albumId));
         if (!result.isPresent()) {
-            result = blobStore.get(defaultCover);
+            URL defaultCover = this.getClass().getClassLoader().getResource("default-cover.jpg");
+            Path path = Paths.get(defaultCover.toURI());
+            byte[] imageBytes = readAllBytes(path);
+            String contentType = new Tika().detect(path);
+            InputStream inputStream = new ByteArrayInputStream(imageBytes);
+            Blob defaultBlob = new Blob(format("%d",albumId), inputStream, contentType);
+            return defaultBlob;
         }
         return result.get();
     }
